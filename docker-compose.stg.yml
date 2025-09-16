@@ -1,0 +1,8 @@
+# Overrides for staging environment
+services:
+  backend:
+    # Example: different restart policy or replicas if using Swarm
+    restart: unless-stopped
+  client:
+    restart: unless-stopped
+

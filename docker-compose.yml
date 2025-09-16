@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: ./backend
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - DATABASE_URL=${DATABASE_URL}
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client
+      args:
+        BACKEND_INTERNAL_URL: ${BACKEND_INTERNAL_URL}
+    ports:
+      - "8080:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  default:
+    name: nestjs-starter-net

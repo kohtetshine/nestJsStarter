@@ -1,0 +1,7 @@
+# Overrides for production environment
+services:
+  backend:
+    restart: unless-stopped
+  client:
+    restart: unless-stopped
+
