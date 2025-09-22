@@ -3,15 +3,19 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { PrismaService } from './prisma/prisma.service';
+import { ApiResponseInterceptor } from './api-response/api-response.interceptor';
+import { ApiExceptionFilter } from './api-response/api-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({ origin: '*'});
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalInterceptors(new ApiResponseInterceptor());
+  app.useGlobalFilters(new ApiExceptionFilter());
   const port = process.env.PORT || 3000;
   // Basic auth for Swagger UI
-  const swaggerUser = process.env.SWAGGER_USER || 'chat2mail';
-  const swaggerPass = process.env.SWAGGER_PASSWORD || 'a8a8a8a8';
+  const swaggerUser = process.env.SWAGGER_USER;
+  const swaggerPass = process.env.SWAGGER_PASSWORD;
   app.use('/docs', (req: any, res: any, next: any) => {
     const authHeader = req.headers?.authorization as string | undefined;
     if (!authHeader || !authHeader.startsWith('Basic ')) {
@@ -40,7 +44,7 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document, {
-    jsonDocumentUrl: 'docs/json',
+    jsonDocumentUrl: '/docs/json',
     swaggerOptions: { persistAuthorization: true },
   });
   // Prisma shutdown hooks (so Ctrl+C closes DB connections cleanly)

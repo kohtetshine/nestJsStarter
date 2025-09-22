@@ -41,11 +41,10 @@ fi
 
 echo "[local] Using backend host port: ${FREE_PORT}"
 
-echo "[local] Starting stack (detached)..."
-BACKEND_PORT="$FREE_PORT" docker compose --env-file "${ENV_FILE}" "${COMPOSE_FILES[@]}" up -d
+echo "[local] Building and starting stack (detached)..."
+BACKEND_PORT="$FREE_PORT" docker compose --env-file "${ENV_FILE}" "${COMPOSE_FILES[@]}" up -d --build
 
 echo "[local] Tailing logs (Ctrl+C to stop watching, services keep running)"
 BACKEND_PORT="$FREE_PORT" docker compose --env-file "${ENV_FILE}" "${COMPOSE_FILES[@]}" logs -f --tail=100
 
 echo "[local] Tip: run ./stop-local.sh to stop containers."
-

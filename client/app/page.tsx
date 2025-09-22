@@ -1,20 +1,23 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { AuthContainer } from '../components';
 
 export default function Home() {
-  const [tab, setTab] = useState<'login' | 'signup'>('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [signedInEmail, setSignedInEmail] = useState<string | null>(null);
+  const [signedInUser, setSignedInUser] = useState<{ email: string } | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // If already signed in, show a small message instead of forms
-    const jwt = typeof window !== 'undefined' ? localStorage.getItem('jwt') : null;
+    // Mark as client-side to avoid hydration mismatch
+    setIsClient(true);
+
+    // Check if already signed in
+    const jwt = localStorage.getItem('jwt');
     if (!jwt) return;
+
     fetch('/api/auth/me', {
       headers: { Authorization: `Bearer ${jwt}` },
       cache: 'no-store',
@@ -22,25 +25,29 @@ export default function Home() {
       .then(async (r) => {
         if (!r.ok) return;
         const d = await r.json();
-        setSignedInEmail(d?.user?.email ?? null);
+        if (d?.user?.email) {
+          setSignedInUser({ email: d.user.email });
+        }
       })
       .catch(() => null);
   }, []);
 
-  const onLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSignIn = async (data: { email: string; password: string }) => {
     setError(null);
+    setSuccess(null);
     setLoading(true);
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
-      if (data?.token) localStorage.setItem('jwt', data.token);
-      setSignedInEmail(data?.user?.email ?? email);
+      const result = await res.json();
+      if (result?.token && isClient) {
+        localStorage.setItem('jwt', result.token);
+      }
+      setSignedInUser({ email: result?.user?.email ?? data.email });
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {
@@ -48,23 +55,19 @@ export default function Home() {
     }
   };
 
-  const onSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSignUp = async (data: { email: string; password: string; confirmPassword: string }) => {
     setError(null);
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
+    setSuccess(null);
     setLoading(true);
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, confirmPassword }),
+        body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error(await res.text());
-      // After successful signup, switch to login tab
-      setTab('login');
+      // After successful signup, user needs to sign in
+      setSuccess('Account created successfully! Please sign in.');
     } catch (err: any) {
       setError(err.message || 'Registration failed');
     } finally {
@@ -72,145 +75,64 @@ export default function Home() {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('jwt');
-    setSignedInEmail(null);
+  const handleSignOut = () => {
+    if (isClient) {
+      localStorage.removeItem('jwt');
+    }
+    setSignedInUser(null);
   };
 
+  const handleForgotPassword = () => {
+    // Placeholder for forgot password functionality
+    alert('Forgot password functionality would be implemented here');
+  };
+
+  // Prevent hydration mismatch by not rendering until client-side
+  if (!isClient) {
+    return (
+      <main className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        <div className="w-full max-w-md space-y-8">
+          <div className="text-center space-y-2">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">Welcome</h1>
+            <p className="text-slate-600">Sign in to your account or create a new one</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+              <div className="space-y-2">
+                <div className="h-4 bg-slate-200 rounded"></div>
+                <div className="h-10 bg-slate-200 rounded"></div>
+              </div>
+              <div className="space-y-2">
+                <div className="h-4 bg-slate-200 rounded"></div>
+                <div className="h-10 bg-slate-200 rounded"></div>
+              </div>
+              <div className="h-10 bg-slate-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen flex items-center justify-center p-4 bg-white">
-      <div className="w-full max-w-sm space-y-8">
-        <h1 className="text-3xl font-light text-center text-slate-800">Welcome</h1>
+    <main className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <div className="w-full max-w-md space-y-8">
+        <div className="text-center space-y-2">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">Welcome</h1>
+          <p className="text-slate-600">Sign in to your account or create a new one</p>
+        </div>
 
-        {signedInEmail ? (
-          <div className="text-center space-y-6">
-            <div className="p-6 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-800">
-              Welcome back, {signedInEmail}
-            </div>
-            <button
-              onClick={logout}
-              className="w-full py-3 px-4 text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-200"
-            >
-              Sign Out
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            <div className="flex border-b border-slate-200">
-              <button
-                className={`flex-1 py-4 text-sm font-medium transition-all duration-200 ${
-                  tab === 'login'
-                    ? 'border-b-2 border-slate-800 text-slate-800'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-                onClick={() => setTab('login')}
-              >
-                Sign In
-              </button>
-              <button
-                className={`flex-1 py-4 text-sm font-medium transition-all duration-200 ${
-                  tab === 'signup'
-                    ? 'border-b-2 border-slate-800 text-slate-800'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-                onClick={() => setTab('signup')}
-              >
-                Sign Up
-              </button>
-            </div>
-
-            {error && (
-              <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm">{error}</div>
-            )}
-
-            {tab === 'login' ? (
-              <form onSubmit={onLogin} className="space-y-6">
-                <div className="space-y-2">
-                  <label htmlFor="email" className="block text-sm font-medium text-slate-700">
-                    Email
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-transparent transition-all duration-200"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="password" className="block text-sm font-medium text-slate-700">
-                    Password
-                  </label>
-                  <input
-                    id="password"
-                    type="password"
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-transparent transition-all duration-200"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full py-3 px-4 bg-slate-800 text-white rounded-xl hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
-                  disabled={loading}
-                >
-                  {loading ? 'Signing in...' : 'Sign In'}
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={onSignup} className="space-y-6">
-                <div className="space-y-2">
-                  <label htmlFor="email" className="block text-sm font-medium text-slate-700">
-                    Email
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-transparent transition-all duration-200"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="password" className="block text-sm font-medium text-slate-700">
-                    Password
-                  </label>
-                  <input
-                    id="password"
-                    type="password"
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-transparent transition-all duration-200"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="confirm" className="block text-sm font-medium text-slate-700">
-                    Confirm Password
-                  </label>
-                  <input
-                    id="confirm"
-                    type="password"
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-transparent transition-all duration-200"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full py-3 px-4 bg-slate-800 text-white rounded-xl hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
-                  disabled={loading}
-                >
-                  {loading ? 'Creating Account...' : 'Create Account'}
-                </button>
-              </form>
-            )}
-          </div>
-        )}
+        <AuthContainer
+          onSignIn={handleSignIn}
+          onSignUp={handleSignUp}
+          onForgotPassword={handleForgotPassword}
+          onSignOut={handleSignOut}
+          loading={loading}
+          error={error}
+          success={success}
+          signedInUser={signedInUser}
+        />
       </div>
     </main>
   );

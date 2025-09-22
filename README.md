@@ -16,11 +16,13 @@ A minimal starter with:
 docker compose up --build
 ```
 
-2. Open the client:
+2. Open the apps:
 - Client: http://localhost:8080
-- Backend: proxied via the client in local Docker
-  - Swagger UI: http://localhost:8080/docs
-  - OpenAPI JSON: http://localhost:8080/docs/json
+- Adminer (DB UI): http://localhost:8081
+- Backend (direct): http://localhost:${BACKEND_PORT:-3005}
+  - Swagger UI: http://localhost:${BACKEND_PORT:-3005}/docs
+  - OpenAPI JSON: http://localhost:${BACKEND_PORT:-3005}/docs/json
+  - Also proxied via client: http://localhost:8080/docs
 
 ## Local Dev Scripts
 
@@ -36,6 +38,7 @@ These mirror convenience scripts from similar repos (e.g., recipe-panel) to make
   - `GET /health` → `{ status: "ok" }`
   - `GET /` → `{ message: "Hello from NestJS!" }`
  - API docs: Swagger enabled at `/docs`
+  - In Docker local: host port is `${BACKEND_PORT}` (defaults to `3005` via `.env.local` or the auto-picked port from `start-local.sh`).
 
 ## Database & Prisma (MySQL)
 - Uses your local MySQL at `localhost:3306` with `root/root` by default.
