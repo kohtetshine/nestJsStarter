@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MailService } from '../mail/mail.service';
-import { SendNotificationDto } from './dto/send-notification.dto';
+import { SendNotificationDto } from '../dto/notification/requests/send-notification.dto';
 import * as admin from 'firebase-admin';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';

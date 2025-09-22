@@ -4,4 +4,3 @@ export class HealthResponseDto {
   @ApiProperty({ example: 'ok' })
   status!: string;
 }
-

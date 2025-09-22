@@ -12,3 +12,4 @@ export class MailDto {
   templatePath?: string;
   templateData?: Record<string, any>;
 }
+

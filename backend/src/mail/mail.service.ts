@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Transporter } from './mail.transporter';
-import { MailDto } from './mail.dto';
+import { MailDto } from '../dto/mail/requests/mail.dto';
 import * as ejs from 'ejs';
 import { ConfigService } from '@nestjs/config';
 import * as path from 'path';
@@ -74,4 +74,3 @@ export class MailService {
     }
   }
 }
-

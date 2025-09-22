@@ -1,6 +1,6 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { NotificationService } from './notification.service';
-import { TestPushNotificationDto } from './dto/send-notification.dto';
+import { TestPushNotificationDto } from '../dto/notification/requests/test-push-notification.dto';
 
 @Controller('notifications')
 export class NotificationController {
@@ -11,4 +11,3 @@ export class NotificationController {
     return this.notificationService.testPushNotification(dto.deviceToken);
   }
 }
-

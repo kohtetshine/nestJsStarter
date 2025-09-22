@@ -8,4 +8,3 @@ export class LoginResponseDto {
   @ApiProperty({ type: UserSummaryDto })
   user!: UserSummaryDto;
 }
-

@@ -1,33 +1,6 @@
-import { IsEmail, IsString, MinLength, IsOptional, IsNumber, IsIn, Min } from 'class-validator';
+import { IsIn, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-
-export class LoginDto {
-  @ApiProperty({ example: 'user@example.com' })
-  @IsEmail()
-  email!: string;
-
-  @ApiProperty({ example: 'secret123' })
-  @IsString()
-  @MinLength(6)
-  password!: string;
-}
-
-export class RegisterDto {
-  @ApiProperty({ example: 'newuser@example.com' })
-  @IsEmail()
-  email!: string;
-
-  @ApiProperty({ example: 'secret123' })
-  @IsString()
-  @MinLength(6)
-  password!: string;
-
-  @ApiProperty({ example: 'secret123' })
-  @IsString()
-  @MinLength(6)
-  confirmPassword!: string;
-}
 
 export class GetUsersDto {
   @ApiProperty({ example: 10, description: 'Number of users per page', required: false })
@@ -50,3 +23,4 @@ export class GetUsersDto {
   @IsIn(['ASC', 'DESC'])
   order?: string = 'ASC';
 }
+

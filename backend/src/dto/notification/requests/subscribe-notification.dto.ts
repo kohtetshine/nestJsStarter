@@ -4,3 +4,4 @@ export class SubscribeNotificationDto {
   @IsString()
   deviceToken!: string;
 }
+

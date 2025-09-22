@@ -8,7 +8,11 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { LoginDto, RegisterDto, GetUsersDto } from './dto/auth.dto';
+import { LoginDto } from '../dto/auth/requests/login.dto';
+import { RegisterDto } from '../dto/auth/requests/register.dto';
+import { ChangePasswordDto } from '../dto/auth/requests/change-password.dto';
+import { UpdateUserDto } from '../dto/auth/requests/update-user.dto';
+import { GetUsersDto } from '../dto/auth/requests/get-users.dto';
 import { mapPrismaError } from '../prisma/prisma-exceptions';
 
 @Injectable()
@@ -66,6 +70,73 @@ export class AuthService {
     } catch (err) {
       // Re-throw UnauthorizedException as-is, only map Prisma errors
       if (err instanceof UnauthorizedException) {
+        throw err;
+      }
+      throw mapPrismaError(err);
+    }
+  }
+
+  async changePassword(data: ChangePasswordDto) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: data.userId },
+        select: { id: true, email: true, password: true },
+      }) as any;
+
+      if (!user || !user.password) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      const hashedNewPassword = await bcrypt.hash(data.newPassword, 10);
+
+      await this.prisma.user.update({
+        where: { id: data.userId },
+        data: { password: hashedNewPassword },
+      });
+
+      return { message: 'Password changed successfully' };
+    } catch (err) {
+      if (err instanceof UnauthorizedException || err instanceof BadRequestException) {
+        throw err;
+      }
+      throw mapPrismaError(err);
+    }
+  }
+
+  async updateUser(data: UpdateUserDto) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: data.userId },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      // Check if email is being updated and if it's already in use
+      if (data.email && data.email !== user.email) {
+        const existingUser = await this.prisma.user.findUnique({
+          where: { email: data.email },
+        });
+        if (existingUser) {
+          throw new ConflictException('Email already in use');
+        }
+      }
+
+      // Build update data object with only provided fields
+      const updateData: any = {};
+      if (data.email !== undefined) updateData.email = data.email;
+      if (data.name !== undefined) updateData.name = data.name;
+
+      const updatedUser = await this.prisma.user.update({
+        where: { id: data.userId },
+        data: updateData,
+        select: { id: true, email: true, name: true, createdAt: true, updatedAt: true },
+      });
+
+      return updatedUser;
+    } catch (err) {
+      if (err instanceof UnauthorizedException || err instanceof ConflictException) {
         throw err;
       }
       throw mapPrismaError(err);

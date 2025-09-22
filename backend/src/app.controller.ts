@@ -2,8 +2,8 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { ApiOkResponseWrapped } from './api-response/swagger';
-import { HelloResponseDto } from './dto/responses/hello-response.dto';
-import { HealthResponseDto } from './dto/responses/health-response.dto';
+import { HelloResponseDto } from './dto/root/responses/hello-response.dto';
+import { HealthResponseDto } from './dto/root/responses/health-response.dto';
 
 @ApiTags('root')
 @Controller()
